@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Complete AWS Infrastructure with Ubuntu EC2, Nginx and Website Deployment
+
+Parameters:
+
+  KeyPairName:
+    Description: Existing EC2 Key Pair
+    Type: AWS::EC2::KeyPair::KeyName
+
+ 
+Resources:
+
+  ProjectVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: Project-VPC
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProjectVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public-Subnet
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Project-IGW
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref ProjectVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ProjectVPC
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH and HTTP
+      VpcId: !Ref ProjectVPC
+
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+      Tags:
+        - Key: Name
+          Value: Web-SG
+
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.micro
+      KeyName: !Ref KeyPairName
+      ImageId: ami-07a00cf47dbbc844c
+
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: "0"
+          GroupSet:
+            - !Ref WebSecurityGroup
+          SubnetId: !Ref PublicSubnet
+
+      Tags:
+        - Key: Name
+          Value: Nginx-WebServer
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+
+          apt-get update -y
+
+          apt-get install nginx wget -y
+
+          systemctl enable nginx
+          systemctl start nginx
+
+          cd /tmp
+
+          wget https://gowtham-webapp-bucket.s3.amazonaws.com/index.html
+          wget https://gowtham-webapp-bucket.s3.amazonaws.com/style.css
+          wget https://gowtham-webapp-bucket.s3.amazonaws.com/script.js
+
+          rm -rf /var/www/html/*
+
+          cp index.html /var/www/html/
+          cp style.css /var/www/html/
+          cp script.js /var/www/html/
+
+          chown -R www-data:www-data /var/www/html
+
+          systemctl restart nginx
+
+Outputs:
+
+  InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref WebServer
+
+  PublicIP:
+    Description: Public IP Address
+    Value: !GetAtt WebServer.PublicIp
+
+  WebsiteURL:
+    Description: Website URL
+    Value: !Sub "http://${WebServer.PublicIp}"
