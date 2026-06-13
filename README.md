@@ -1,67 +1,72 @@
-# Automated Server Deployment using AWS CloudFormation
+# 🚀 Automated Server Deployment on AWS Using CloudFormation Templates
 
 ## 📌 Project Overview
 
-This project demonstrates how to automate the deployment of a web server and static web application on AWS using **AWS CloudFormation (Infrastructure as Code)**.
+This project demonstrates **Infrastructure as Code (IaC)** by automating the deployment of a web server on **Amazon Web Services (AWS)** using **AWS CloudFormation**. The solution provisions the required cloud infrastructure, configures an EC2 instance with **Nginx**, and deploys a static website hosted from files stored in an **Amazon S3** bucket.
 
-The CloudFormation template provisions the required networking resources, launches an Ubuntu EC2 instance, installs and configures Nginx, and deploys a static website by replacing the default Nginx content with custom application files.
+The primary goal is to eliminate manual infrastructure provisioning and server configuration by using reusable CloudFormation templates.
 
 ---
 
-## 🚀 Features
+## 🎯 Objectives
 
-* Infrastructure as Code using AWS CloudFormation
-* Automated creation of a custom VPC
-* Public subnet with Internet connectivity
-* Internet Gateway and Route Table configuration
-* Security Group with HTTP and SSH access
-* Ubuntu EC2 instance deployment
-* Automatic Nginx installation using UserData
-* Automated deployment of static website files
-* Publicly accessible web application using EC2 Public IP
-* Reproducible and consistent infrastructure deployment
+* Automate AWS infrastructure deployment using CloudFormation.
+* Create an Amazon S3 bucket for hosting website assets.
+* Upload static website files (HTML, CSS, JavaScript) to S3.
+* Provision networking resources such as VPC, Subnet, Internet Gateway, Route Table, and Security Group.
+* Launch an EC2 instance with a public IP address.
+* Automatically install and configure Nginx using EC2 User Data.
+* Deploy the website by replacing the default Nginx page with files from the S3 bucket.
+* Verify successful deployment by accessing the application through the EC2 public IP.
 
 ---
 
 ## 🏗️ Architecture
 
 ```text
-                    AWS CloudFormation
-                            │
-                            ▼
-                   Creates Networking Stack
-                            │
-          ┌─────────────────┴─────────────────┐
-          │                                   │
-          ▼                                   ▼
-        VPC                           Internet Gateway
-          │                                   │
-          └──────────────┬────────────────────┘
-                         │
-                  Public Route Table
-                         │
-                         ▼
-                   Public Subnet
-                         │
-                         ▼
-                 Security Group (22, 80)
-                         │
-                         ▼
-                 Ubuntu EC2 Instance
-                         │
-                 Cloud-Init / UserData
-                         │
-         ┌───────────────┼────────────────┐
-         │               │                │
-         ▼               ▼                ▼
-   Install Nginx   Download Website   Configure Nginx
-         │
-         ▼
-    /var/www/html
-         │
-         ▼
-  Static Website Available
-      via Public IP
+                  +---------------------------+
+                  |      Website Source       |
+                  | (HTML, CSS, JavaScript)   |
+                  +------------+--------------+
+                               |
+                               v
+                    +----------------------+
+                    |     Amazon S3 Bucket |
+                    |  Static Website Files|
+                    +-----------+----------+
+                                |
+                                |
+                    CloudFormation Templates
+                                |
+                                v
+          +-------------------------------------------+
+          |         AWS CloudFormation Stack           |
+          +-------------------+------------------------+
+                              |
+          -----------------------------------------------------
+          |                    |                            |
+          v                    v                            v
+     Amazon VPC          Security Group             Internet Gateway
+          |                    |                            |
+          ---------------------+----------------------------
+                               |
+                               v
+                      Public Subnet & Route Table
+                               |
+                               v
+                    +--------------------------+
+                    |      EC2 Instance         |
+                    |   Ubuntu + Nginx Server   |
+                    +-------------+-------------+
+                                  |
+                 User Data installs Nginx and copies
+                 website files from Amazon S3
+                                  |
+                                  v
+                      Static Website Hosted on Nginx
+                                  |
+                                  v
+                    Access via EC2 Public IPv4 Address
 ```
 
 ---
@@ -70,236 +75,135 @@ The CloudFormation template provisions the required networking resources, launch
 
 * AWS CloudFormation
 * Amazon EC2
-* Amazon VPC
 * Amazon S3
-* Ubuntu Server
-* Nginx
+* Amazon VPC
+* Internet Gateway
+* Route Tables
+* Security Groups
+* Ubuntu Linux
+* Nginx Web Server
+* HTML5
+* CSS3
+* JavaScript
 * YAML
-* Bash (UserData)
 
 ---
 
-## 📂 Project Structure
+## 📂 Repository Structure
 
 ```text
-.
-├── webserver.yaml          # CloudFormation template
-├── index.html              # Website homepage
-├── style.css               # Stylesheet
-├── script.js               # JavaScript logic
-└── README.md               # Project documentation
+├── README.md
+├── index.html
+├── style.css
+├── script.js
+├── s3-CloudFormation-Template.yaml
+└── webserver.yaml
 ```
 
 ---
 
-## 📋 Prerequisites
+## 📋 Deployment Steps
 
-Before deploying the project:
+### Step 1: Create the Amazon S3 Bucket
 
-* AWS Account
-* AWS Management Console access
-* Existing EC2 Key Pair
-* CloudFormation permissions
-* S3 bucket containing:
+* Deploy the `s3-CloudFormation-Template.yaml` template.
+* Create an S3 bucket for storing website assets.
+* Configure the bucket with appropriate public access settings and bucket policy.
 
-  * `index.html`
-  * `style.css`
-  * `script.js`
+### Step 2: Upload Website Files
 
----
+Upload the following files to the S3 bucket:
 
-## ⚙️ Deployment Steps
+* `index.html`
+* `style.css`
+* `script.js`
+* Images and other static assets (if applicable)
 
-### Step 1: Upload Website Files
+### Step 3: Deploy the Infrastructure
 
-Create an Amazon S3 bucket and upload your website files:
+Deploy the `webserver.yaml` CloudFormation template.
 
-```text
-index.html
-style.css
-script.js
-```
-
-Ensure the EC2 instance can read these objects (either through public access or an IAM role with S3 read permissions).
-
----
-
-### Step 2: Create CloudFormation Stack
-
-1. Open AWS Console.
-2. Navigate to **CloudFormation**.
-3. Click **Create Stack**.
-4. Select **Upload a template file**.
-5. Upload `webserver.yaml`.
-6. Click **Next**.
-
----
-
-### Step 3: Configure Stack
-
-Provide:
-
-* Stack Name
-* EC2 Key Pair
-* Any template parameters (if applicable)
-
-Then continue through the wizard and create the stack.
-
----
-
-### Step 4: Automatic Provisioning
-
-CloudFormation provisions:
+The template provisions:
 
 * VPC
 * Public Subnet
 * Internet Gateway
 * Route Table
 * Security Group
-* Ubuntu EC2 Instance
+* EC2 Instance
+* Public IP assignment
 
-The EC2 UserData script then:
+### Step 4: Automatic Server Configuration
 
-* Updates packages
+During instance launch, the EC2 User Data script:
+
+* Updates system packages
 * Installs Nginx
+* Retrieves website files from Amazon S3
+* Replaces the default Nginx web content
 * Starts and enables the Nginx service
-* Downloads website files
-* Replaces the default Nginx content in `/var/www/html`
-* Restarts Nginx
+
+### Step 5: Verify Deployment
+
+After the CloudFormation stack completes successfully:
+
+1. Open the EC2 console.
+2. Copy the Public IPv4 Address of the instance.
+3. Paste it into a web browser.
+4. The deployed static website should be displayed.
 
 ---
 
-### Step 5: Access the Website
+## 📸 Suggested Screenshots
 
-After the stack reaches `CREATE_COMPLETE`, retrieve the EC2 Public IP from the CloudFormation Outputs or EC2 Console.
+Include screenshots for:
 
-Example:
-
-```text
-http://<EC2-PUBLIC-IP>
-```
-
----
-
-## 🔒 Security Group Configuration
-
-| Port | Protocol | Purpose          |
-| ---- | -------- | ---------------- |
-| 22   | TCP      | SSH Access       |
-| 80   | TCP      | HTTP Web Traffic |
+* S3 bucket creation
+* Bucket policy configuration
+* Website file upload
+* CloudFormation stack creation
+* EC2 instance details
+* Security group configuration
+* Successful stack completion
+* Website accessed using the EC2 public IP
 
 ---
 
-## 📊 CloudFormation Resources
+## ✅ Project Outcome
 
-The template provisions:
-
-* AWS::EC2::VPC
-* AWS::EC2::Subnet
-* AWS::EC2::InternetGateway
-* AWS::EC2::RouteTable
-* AWS::EC2::Route
-* AWS::EC2::SubnetRouteTableAssociation
-* AWS::EC2::SecurityGroup
-* AWS::EC2::Instance
+The project successfully automates the deployment of a web server and static website using AWS CloudFormation. By combining Amazon S3 for asset storage with EC2 User Data and Nginx configuration, the solution demonstrates a repeatable and efficient Infrastructure as Code workflow.
 
 ---
 
-## 📁 Website Deployment Path
-
-The application is deployed to:
-
-```text
-/var/www/html/
-```
-
-The default Nginx page is replaced with the custom website files.
-
----
-
-## 🧪 Verification
-
-Verify the deployment by:
-
-* Confirming the CloudFormation stack status is `CREATE_COMPLETE`
-* Ensuring the EC2 instance is in the `running` state
-* Checking that Nginx is active:
-
-  ```bash
-  sudo systemctl status nginx
-  ```
-* Visiting:
-
-  ```text
-  http://<EC2-PUBLIC-IP>
-  ```
-
----
-
-## ⚠️ Troubleshooting
-
-### 403 Forbidden
-
-Possible causes:
-
-* `index.html` is missing from `/var/www/html`
-* Website files could not be downloaded from S3
-* S3 permissions prevent object access
-
-### UserData Logs
-
-Inspect cloud-init logs:
-
-```bash
-sudo cat /var/log/cloud-init-output.log
-```
-
-### Verify Website Files
-
-```bash
-ls -la /var/www/html
-```
-
-Expected:
-
-```text
-index.html
-style.css
-script.js
-```
-
----
-
-## 📈 Future Enhancements
-
-* IAM Role for secure S3 access instead of public objects
-* Elastic IP for a static public address
-* Application Load Balancer
-* Auto Scaling Group
-* HTTPS using ACM and Nginx
-* CI/CD integration with GitHub Actions or AWS CodePipeline
-* Parameterized CloudFormation template for reusable deployments
-
----
-
-## 🎯 Learning Outcomes
-
-By completing this project, you gain hands-on experience with:
+## 🌟 Key Features
 
 * Infrastructure as Code (IaC)
+* Automated AWS resource provisioning
+* Nginx installation without manual intervention
+* Static website deployment from Amazon S3
+* Publicly accessible web server
+* Reusable CloudFormation templates
+* Minimal manual configuration
+
+---
+
+## 📚 Learning Outcomes
+
+Through this project, you will gain practical experience with:
+
 * AWS CloudFormation
-* EC2 provisioning
-* VPC networking
-* Security Groups
-* Nginx configuration
-* Automated server bootstrapping using UserData
-* Static website deployment on AWS
+* Infrastructure as Code principles
+* Amazon EC2 provisioning
+* Amazon S3 object storage
+* Nginx web server configuration
+* Cloud automation workflows
+* Static website hosting on AWS
 
 ---
 
 ## 👨‍💻 Author
 
-**Kadali Gowtham Sai**
-**Multi Cloud | DevSecOps Engineer**
+**Gowtham Sai Kadali**
+**Role:** Multi-Cloud & DevSecOps Engineer
 
-This project demonstrates end-to-end automated infrastructure provisioning and web server deployment on AWS using native cloud automation tools.
+If you found this project useful, consider giving the repository a ⭐ on GitHub.
