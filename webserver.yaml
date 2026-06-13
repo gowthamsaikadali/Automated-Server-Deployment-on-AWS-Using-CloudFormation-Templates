@@ -117,9 +117,9 @@ Resources:
 
           cd /tmp
 
-          wget https://gowtham-webapp-bucket.s3.amazonaws.com/index.html
-          wget https://gowtham-webapp-bucket.s3.amazonaws.com/style.css
-          wget https://gowtham-webapp-bucket.s3.amazonaws.com/script.js
+          wget https://gowtham-webapp-bucket-2026.s3.ap-south-1.amazonaws.com/index.html
+          wget https://gowtham-webapp-bucket-2026.s3.ap-south-1.amazonaws.com/style.css
+          wget https://gowtham-webapp-bucket-2026.s3.ap-south-1.amazonaws.com/script.js
 
           rm -rf /var/www/html/*
 
